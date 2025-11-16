@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mohammed Yosri Selmi - Ultra Space Portfolio</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+            background: #000;
+            color: #fff;
+            cursor: crosshair;
+        }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .hud-overlay {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            color: #00ff88;
+            z-index: 100;
+            text-shadow: 0 0 10px #00ff88;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .hud-line {
+            margin: 5px 0;
+            opacity: 0.9;
+        }
+
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(transparent 50%, rgba(0, 255, 136, 0.02) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 99;
+            animation: scan 8s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .space-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 50px;
+            position: relative;
+        }
+
+        .hologram-container {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(0, 10, 20, 0.9);
+            border: 2px solid #00ff88;
+            border-radius: 20px;
+            padding: 60px;
+            position: relative;
+            backdrop-filter: blur(30px);
+            box-shadow: 0 0 80px rgba(0, 255, 136, 0.4), inset 0 0 80px rgba(0, 255, 136, 0.05);
+            opacity: 0;
+            transform: translateY(100px) rotateX(10deg);
+            transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .hologram-container.visible {
+            opacity: 1;
+            transform: translateY(0) rotateX(0deg);
+        }
+
+        .hologram-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ff88, #0088ff, #8800ff, #ff0088);
+            border-radius: 20px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s;
+            animation: borderRotate 3s linear infinite;
+        }
+
+        @keyframes borderRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hologram-container:hover::before {
+            opacity: 0.6;
+        }
+
+        .cyber-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(2.5rem, 8vw, 6rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            background: linear-gradient(90deg, #00ff88, #0088ff, #00ff88);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease infinite;
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+            position: relative;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% center; }
+            50% { background-position: 100% center; }
+        }
+
+        .cyber-title::after {
+            content: '█';
+            animation: blink 1s infinite;
+            color: #00ff88;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        .subtitle-cyber {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1rem, 2.5vw, 1.8rem);
+            color: #0088ff;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px rgba(0, 136, 255, 0.8);
+            letter-spacing: 0.15em;
+        }
+
+        .section-header {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(2rem, 5vw, 4rem);
+            color: #00ff88;
+            margin-bottom: 50px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            position: relative;
+            display: inline-block;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+        }
+
+        .section-header::before {
+            content: '> ';
+            color: #0088ff;
+        }
+
+        .section-header::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00ff88, #0088ff);
+            transition: width 0.8s ease;
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        .hologram-container.visible .section-header::after {
+            width: 100%;
+        }
+
+        .info-text {
+            font-size: 1.2rem;
+            line-height: 2;
+            color: #cce7ff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 5px rgba(0, 136, 255, 0.3);
+        }
+
+        .info-text .highlight {
+            color: #00ff88;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .data-panel {
+            background: rgba(0, 136, 255, 0.1);
+            border: 2px solid #0088ff;
+            border-radius: 15px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+
+        .data-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .data-panel:hover::before {
+            left: 100%;
+        }
+
+        .data-panel:hover {
+            transform: translateY(-10px) scale(1.03);
+            border-color: #00ff88;
+            box-shadow: 0 20px 60px rgba(0, 255, 136, 0.4);
+            background: rgba(0, 255, 136, 0.15);
+        }
+
+        .panel-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.4rem;
+            color: #00ff88;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .panel-content {
+            font-size: 1rem;
+            color: #b3d9ff;
+            line-height: 1.8;
+        }
+
+        .ai-timeline {
+            position: relative;
+            padding-left: 60px;
+            margin-top: 50px;
+        }
+
+        .ai-timeline::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #00ff88, #0088ff, #8800ff);
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        .timeline-node {
+            position: relative;
+            margin-bottom: 60px;
+            padding-left: 30px;
+        }
+
+        .timeline-node::before {
+            content: '';
+            position: absolute;
+            left: -50px;
+            top: 10px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00ff88;
+            border: 3px solid #000;
+            box-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px #00ff88; }
+            50% { transform: scale(1.3); box-shadow: 0 0 30px #00ff88, 0 0 50px #00ff88; }
+        }
+
+        .timeline-card {
+            background: rgba(0, 20, 40, 0.8);
+            border: 2px solid #0088ff;
+            border-left: 5px solid #00ff88;
+            padding: 30px;
+            border-radius: 10px;
+            transition: all 0.4s ease;
+        }
+
+        .timeline-card:hover {
+            transform: translateX(15px);
+            border-color: #00ff88;
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.3);
+            background: rgba(0, 40, 60, 0.9);
+        }
+
+        .timeline-date {
+            font-family: 'Orbitron', monospace;
+            color: #0088ff;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            letter-spacing: 0.1em;
+        }
+
+        .timeline-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8rem;
+            color: #00ff88;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .timeline-text {
+            color: #cce7ff;
+            line-height: 1.8;
+            margin-bottom: 10px;
+            font-size: 1.05rem;
+        }
+
+        .tech-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .tech-chip {
+            font-family: 'Orbitron', monospace;
+            padding: 8px 18px;
+            background: rgba(0, 136, 255, 0.2);
+            border: 1px solid #0088ff;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #00ff88;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 136, 255, 0.3);
+        }
+
+        .tech-chip:hover {
+            background: rgba(0, 255, 136, 0.3);
+            border-color: #00ff88;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.5);
+        }
+
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .project-hologram {
+            background: rgba(136, 0, 255, 0.1);
+            border: 2px solid #8800ff;
+            border-radius: 20px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s ease;
+            cursor: pointer;
+        }
+
+        .project-hologram::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(136, 0, 255, 0.3), transparent 70%);
+            opacity: 0;
+            transition: all 0.6s ease;
+        }
+
+        .project-hologram:hover::after {
+            opacity: 1;
+            transform: rotate(180deg);
+        }
+
+        .project-hologram:hover {
+            transform: scale(1.05);
+            border-color: #00ff88;
+            box-shadow: 0 20px 60px rgba(136, 0, 255, 0.5);
+        }
+
+        .project-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.6rem;
+            color: #8800ff;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 0 10px rgba(136, 0, 255, 0.8);
+        }
+
+        .project-text {
+            color: #cce7ff;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+            font-size: 1.05rem;
+        }
+
+        .contact-matrix {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+        }
+
+        .contact-node {
+            background: rgba(0, 136, 255, 0.1);
+            border: 2px solid #0088ff;
+            border-radius: 15px;
+            padding: 35px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .contact-node::before {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, transparent, rgba(0, 255, 136, 0.2));
+            transition: top 0.5s ease;
+        }
+
+        .contact-node:hover::before {
+            top: 100%;
+        }
+
+        .contact-node:hover {
+            transform: translateY(-10px);
+            border-color: #00ff88;
+            box-shadow: 0 15px 50px rgba(0, 255, 136, 0.4);
+        }
+
+        .contact-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 10px #00ff88);
+        }
+
+        .contact-label {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            color: #0088ff;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .contact-data {
+            font-size: 1.1rem;
+            color: #00ff88;
+            font-weight: 500;
+        }
+
+        .nav-sphere {
+            position: fixed;
+            top: 50%;
+            right: 40px;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .nav-orb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(0, 136, 255, 0.4);
+            border: 2px solid #0088ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 0 0 10px rgba(0, 136, 255, 0.5);
+        }
+
+        .nav-orb.active {
+            background: #00ff88;
+            border-color: #00ff88;
+            box-shadow: 0 0 25px rgba(0, 255, 136, 0.8);
+            transform: scale(1.5);
+        }
+
+        .nav-orb:hover {
+            background: #00ff88;
+            transform: scale(1.4);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+        }
+
+        .nav-orb::after {
+            content: attr(data-label);
+            position: absolute;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            white-space: nowrap;
+            background: rgba(0, 20, 40, 0.95);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: 'Orbitron', monospace;
+            color: #00ff88;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            border: 1px solid #00ff88;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+        }
+
+        .nav-orb:hover::after {
+            opacity: 1;
+        }
+
+        .hero-space {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .glitch-text {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(3rem, 10vw, 9rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #00ff88;
+            text-shadow: 0 0 30px rgba(0, 255, 136, 0.8);
+            animation: flicker 4s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            41%, 42% { opacity: 0.8; }
+            43%, 44% { opacity: 1; }
+            45% { opacity: 0.9; }
+        }
+
+        @media (max-width: 768px) {
+            .space-section {
+                padding: 60px 20px;
+            }
+
+            .hologram-container {
+                padding: 30px;
+            }
+
+            .nav-sphere {
+                display: none;
+            }
+
+            .project-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .ai-timeline {
+                padding-left: 40px;
+            }
+        }
+
+        .loading-cosmos {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.8s ease;
+        }
+
+        .loading-cosmos.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .quantum-loader {
+            width: 120px;
+            height: 120px;
+            border: 4px solid rgba(0, 136, 255, 0.2);
+            border-top: 4px solid #00ff88;
+            border-radius: 50%;
+            animation: quantumSpin 1.5s linear infinite;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+        }
+
+        @keyframes quantumSpin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-family: 'Orbitron', monospace;
+            color: #00ff88;
+            margin-top: 30px;
+            font-size: 1.2rem;
+            letter-spacing: 0.3em;
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-cosmos" id="loadingCosmos">
+        <div class="quantum-loader"></div>
+        <div class="loading-text">INITIALIZING...</div>
+    </div>
+
+    <div class="scanline"></div>
+
+    <div class="hud-overlay">
+        <div class="hud-line">SYSTEM: PORTFOLIO_V5.0_ULTRA</div>
+        <div class="hud-line">STATUS: ONLINE</div>
+        <div class="hud-line">USER: YOSRI_SELMI</div>
+        <div class="hud-line" id="coordinates">COORDS: [0, 0, 0]</div>
+        <div class="hud-line" id="fps">FPS: 60</div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="nav-sphere">
+        <div class="nav-orb active" data-label="HOME" data-section="0"></div>
+        <div class="nav-orb" data-label="ABOUT" data-section="1"></div>
+        <div class="nav-orb" data-label="SKILLS" data-section="2"></div>
+        <div class="nav-orb" data-label="EXPERIENCE" data-section="3"></div>
+        <div class="nav-orb" data-label="PROJECTS" data-section="4"></div>
+        <div class="nav-orb" data-label="CONTACT" data-section="5"></div>
+    </div>
+
+    <div class="content">
+        <div class="hero-space">
+            <h1 class="glitch-text">MOHAMMED YOSRI</h1>
+            <p class="subtitle-cyber">SOFTWARE ENGINEER • CLOUD ARCHITECT • AI DEVELOPER</p>
+        </div>
+
+        <div class="space-section" data-section="1">
+            <div class="hologram-container">
+                <h2 class="section-header">About.sys</h2>
+                <p class="info-text">
+                    Welcome to my digital space. I'm a <span class="highlight">software engineering student</span> specializing in 
+                    <span class="highlight">microservices architecture</span>, <span class="highlight">full-stack development</span>, 
+                    and <span class="highlight">cloud technologies</span>. My mission: building scalable systems that solve real-world problems.
+                </p>
+                <p class="info-text">
+                    From reducing administrative processing time by <span class="highlight">62.5%</span> to achieving 
+                    <span class="highlight">85% accuracy</span> in ML-powered plagiarism detection, I transform complex challenges 
+                    into elegant solutions. Currently pursuing my Engineering Degree at <span class="highlight">ESPRIT</span>, 
+                    I continuously explore cutting-edge technologies.
+                </p>
+                <p class="info-text">
+                    📍 <span class="highlight">Location:</span> Ariana, Tunis<br>
+                    🎓 <span class="highlight">Education:</span> National Engineering Degree - ESPRIT (Software Engineering)<br>
+                    🌐 <span class="highlight">Languages:</span> Arabic (Native), French (Professional), English (Fluent)
+                </p>
+            </div>
+        </div>
+
+        <div class="space-section" data-section="2">
+            <div class="hologram-container">
+                <h2 class="section-header">Tech.stack</h2>
+                <div class="data-grid">
+                    <div class="data-panel">
+                        <div class="panel-title">▸ Backend Systems</div>
+                        <div class="panel-content">
+                            Spring Boot • Symfony • Flask • Node.js<br>
+                            RESTful APIs • Microservices • Event-Driven Architecture
+                        </div>
+                    </div>
+                    <div class="data-panel">
+                        <div class="panel-title">▸ Frontend Interface</div>
+                        <div class="panel-content">
+                            React • Next.js • Angular • JavaFX<br>
+                            Responsive Design • Modern UI/UX
+                        </div>
+                    </div>
+                    <div class="data-panel">
+                        <div class="panel-title">▸ Programming</div>
+                        <div class="panel-content">
+                            Java • JavaScript • TypeScript • Python • PHP<br>
+                            OOP • Functional Programming
+                        </div>
+                    </div>
+                    <div class="data-panel">
+                        <div class="panel-title">▸ Data Systems</div>
+                        <div class="panel-content">
+                            MySQL • PostgreSQL • MongoDB • Firebase<br>
+                            Query Optimization • Database Design
+                        </div>
+                    </div>
+                    <div class="data-panel">
+                        <div class="panel-title">▸ DevOps & Cloud</div>
+                        <div class="panel-content">
+                            Docker • Kubernetes • Jenkins • AWS<br>
+                            CI/CD • Infrastructure as Code
+                        </div>
+                    </div>
+                    <div class="data-panel">
+                        <div class="panel-title">▸ Message Brokers</div>
+                        <div class="panel-content">
+                            Apache Kafka • RabbitMQ<br>
+                            Real-time Processing • Event Streaming
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 50px;">
+                    <h3 class="section-header" style="font-size: 2rem;">Certifications</h3>
+                    <div class="tech-chips">
+                        <span class="tech-chip">AWS Academy - Cloud Foundations (2025)</span>
+                        <span class="tech-chip">Scrum Foundation Professional (2024)</span>
+                        <span class="tech-chip">CCNA: Routing & Wireless (2023)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-section" data-section="3">
+            <div class="hologram-container">
+                <h2 class="section-header">Experience.log</h2>
+                <div class="ai-timeline">
+                    <div class="timeline-node">
+                        <div class="timeline-card">
+                            <div class="timeline-date">JUL 2025 - SEP 2025</div>
+                            <div class="timeline-title">Engineering Intern @ ESPRIT</div>
+                            <p class="timeline-text">
+                                Architected university management platform (ESPRITSCOLAR) using 6 Spring Boot microservices 
+                                with Next.js frontend and MySQL, reducing administrative processing time from approximately 
+                                8 hours to under 5 hours per workflow.
+                            </p>
+                            <p class="timeline-text">
+                                Engineered JWT authentication with Spring Security implementing RBAC for 3 user roles and 
+                                refresh token mechanism, securing all microservices and passing institutional security review.
+                            </p>
+                            <div class="tech-chips">
+                                <span class="tech-chip">Spring Boot</span>
+                                <span class="tech-chip">Spring Security</span>
+                                <span class="tech-chip">Next.js</span>
+                                <span class="tech-chip">MySQL</span>
+                                <span class="tech-chip">Docker</span>
+                                <span class="tech-chip">Cloudinary</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-node">
+                        <div class="timeline-card">
+                            <div class="timeline-date">JUL 2024 - SEP 2024</div>
+                            <div class="timeline-title">Full-Stack Developer @ Aderfia INC</div>
+                            <p class="timeline-text">
+                                Developed healthcare system using Symfony 6, Angular, and PostgreSQL, with automated 
+                                appointment scheduling, eliminating manual booking processes for 100+ daily appointments.
+                            </p>
+                            <p class="timeline-text">
+                                Implemented RESTful APIs with RBAC for 5+ user types, containerized with Docker reducing 
+                                deployment time by 50%, and optimized database queries improving response time by 35%.
+                            </p>
+                            <div class="tech-chips">
+                                <span class="tech-chip">Symfony 6</span>
+                                <span class="tech-chip">Angular</span>
+                                <span class="tech-chip">PostgreSQL</span>
+                                <span class="tech-chip">Docker</span>
+                                <span class="tech-chip">REST API</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-section" data-section="4">
+            <div class="hologram-container">
+                <h2 class="section-header">Projects.db</h2>
+                <div class="project-grid">
+                    <div class="project-hologram">
+                        <div class="timeline-date">SEP 2025 - OCT 2025</div>
+                        <h3 class="project-title">Plagiarism Detection System</h3>
+                        <p class="project-text">
+                            Constructed microservices platform achieving 85% detection accuracy using Spring Boot, 
+                            Flask NLP service with Sentence-Transformers, Angular, and MySQL with Docker orchestration.
+                        </p>
+                        <p class="project-text">
+                            Integrated Google Gemini API reducing false positives by 40% through AI-powered semantic 
+                            similarity analysis.
+                        </p>
+                        <div class="tech-chips">
+                            <span class="tech-chip">Spring Boot</span>
+                            <span class="tech-chip">Flask</span>
+                            <span class="tech-chip">Angular</span>
+                            <span class="tech-chip">ML/NLP</span>
+                            <span class="tech-chip">Gemini API</span>
+                            <span class="tech-chip">Docker</span>
+                        </div>
+                    </div>
+
+                    <div class="project-hologram">
+                        <div class="timeline-date">JAN 2025 - MAY 2025</div>
+                        <h3 class="project-title">Construction Management Platform</h3>
+                        <p class="project-text">
+                            Designed event-driven microservices architecture using Spring Boot services, Angular dashboard, 
+                            MySQL database, and Apache Kafka message broker, improving deployment velocity by 30%.
+                        </p>
+                        <p class="project-text">
+                            Established asynchronous inter-service communication with Kafka enabling real-time project 
+                            updates, reducing system coupling and increasing reliability by 25%.
+                        </p>
+                        <div class="tech-chips">
+                            <span class="tech-chip">Spring Boot</span>
+                            <span class="tech-chip">Angular</span>
+                            <span class="tech-chip">Kafka</span>
+                            <span class="tech-chip">MySQL</span>
+                            <span class="tech-chip">Docker</span>
+                        </div>
+                    </div>
+
+                    <div class="project-hologram">
+                        <div class="timeline-date">JAN 2024 - MAY 2024</div>
+                        <h3 class="project-title">Gym Management System</h3>
+                        <p class="project-text">
+                            Assembled meal management module with calorie tracking and BMI calculation features using 
+                            Symfony backend and JavaFX desktop interface, enabling personalized nutrition plans.
+                        </p>
+                        <p class="project-text">
+                            Configured data synchronization between web and desktop platforms via RESTful API architecture, 
+                            reducing manual workflows by 40%.
+                        </p>
+                        <div class="tech-chips">
+                            <span class="tech-chip">Symfony</span>
+                            <span class="tech-chip">JavaFX</span>
+                            <span class="tech-chip">MySQL</span>
+                            <span class="tech-chip">REST API</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-section" data-section="5">
+            <div class="hologram-container">
+                <h2 class="section-header">Contact.network</h2>
+                <p class="info-text" style="text-align: center; font-size: 1.4rem;">
+                    Let's connect and build the future together
+                </p>
+                <div class="contact-matrix">
+                    <div class="contact-node">
+                        <div class="contact-icon">📧</div>
+                        <div class="contact-label">Email</div>
+                        <div class="contact-data">mohammedyosri.selmi@esprit.tn</div>
+                    </div>
+                    <div class="contact-node">
+                        <div class="contact-icon">📱</div>
+                        <div class="contact-label">Phone</div>
+                        <div class="contact-data">+216 95 35 92 82</div>
+                    </div>
+                    <div class="contact-node">
+                        <div class="contact-icon">💼</div>
+                        <div class="contact-label">LinkedIn</div>
+                        <div class="contact-data">Mohammed Yosri Selmi</div>
+                    </div>
+                    <div class="contact-node">
+                        <div class="contact-icon">🔗</div>
+                        <div class="contact-label">GitHub</div>
+                        <div class="contact-data">github.com/yosri369</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // ULTRA HIGH QUALITY Three.js Scene
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.0003);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        const renderer = new THREE.WebGLRenderer({ 
+            canvas: document.getElementById('canvas'), 
+            alpha: true, 
+            antialias: true,
+            powerPreference: "high-performance"
+        });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        camera.position.set(0, 20, 100);
+
+        // Enhanced Lighting System
+        const ambientLight = new THREE.AmbientLight(0x222244, 0.3);
+        scene.add(ambientLight);
+
+        // Sun light
+        const sunLight = new THREE.PointLight(0xffaa00, 2, 500);
+        sunLight.position.set(-80, 20, -100);
+        sunLight.castShadow = true;
+        scene.add(sunLight);
+
+        // Blue accent lights
+        const blueLight1 = new THREE.PointLight(0x0088ff, 1, 300);
+        blueLight1.position.set(50, 50, 50);
+        scene.add(blueLight1);
+
+        const blueLight2 = new THREE.PointLight(0x00ff88, 1, 300);
+        blueLight2.position.set(-50, 50, 50);
+        scene.add(blueLight2);
+
+        // Create realistic starfield with depth
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 20000;
+        const starPositions = new Float32Array(starCount * 3);
+        const starColors = new Float32Array(starCount * 3);
+        const starSizes = new Float32Array(starCount);
+
+        for(let i = 0; i < starCount; i++) {
+            const i3 = i * 3;
+            const radius = 200 + Math.random() * 1800;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos((Math.random() * 2) - 1);
+            
+            starPositions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+            starPositions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            starPositions[i3 + 2] = radius * Math.cos(phi);
+            
+            starSizes[i] = Math.random() * 1.5;
+            
+            const colorChoice = Math.random();
+            if (colorChoice > 0.85) {
+                starColors[i3] = 0.3 + Math.random() * 0.7;
+                starColors[i3 + 1] = 0.7 + Math.random() * 0.3;
+                starColors[i3 + 2] = 1;
+            } else if (colorChoice > 0.7) {
+                starColors[i3] = 1;
+                starColors[i3 + 1] = 0.9 + Math.random() * 0.1;
+                starColors[i3 + 2] = 0.6 + Math.random() * 0.4;
+            } else if (colorChoice > 0.5) {
+                starColors[i3] = 1;
+                starColors[i3 + 1] = 0.4 + Math.random() * 0.3;
+                starColors[i3 + 2] = 0.3 + Math.random() * 0.3;
+            } else {
+                starColors[i3] = 0.9 + Math.random() * 0.1;
+                starColors[i3 + 1] = 0.9 + Math.random() * 0.1;
+                starColors[i3 + 2] = 0.9 + Math.random() * 0.1;
+            }
+        }
+
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        starGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+        starGeometry.setAttribute('size', new THREE.BufferAttribute(starSizes, 1));
+
+        const starMaterial = new THREE.PointsMaterial({
+            size: 1,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.95,
+            blending: THREE.AdditiveBlending,
+            sizeAttenuation: true
+        });
+
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+
+        // Create nebula clouds
+        const nebulaGeometry = new THREE.BufferGeometry();
+        const nebulaCount = 5000;
+        const nebulaPositions = new Float32Array(nebulaCount * 3);
+        const nebulaColors = new Float32Array(nebulaCount * 3);
+
+        for(let i = 0; i < nebulaCount; i++) {
+            const i3 = i * 3;
+            const spread = 400;
+            nebulaPositions[i3] = (Math.random() - 0.5) * spread;
+            nebulaPositions[i3 + 1] = (Math.random() - 0.5) * spread;
+            nebulaPositions[i3 + 2] = (Math.random() - 0.5) * spread - 200;
+            
+            const colorType = Math.random();
+            if (colorType > 0.6) {
+                nebulaColors[i3] = 0.5 + Math.random() * 0.5;
+                nebulaColors[i3 + 1] = 0;
+                nebulaColors[i3 + 2] = 0.8 + Math.random() * 0.2;
+            } else if (colorType > 0.3) {
+                nebulaColors[i3] = 0;
+                nebulaColors[i3 + 1] = 0.4 + Math.random() * 0.6;
+                nebulaColors[i3 + 2] = 0.8 + Math.random() * 0.2;
+            } else {
+                nebulaColors[i3] = 0;
+                nebulaColors[i3 + 1] = 0.8 + Math.random() * 0.2;
+                nebulaColors[i3 + 2] = 0.5 + Math.random() * 0.5;
+            }
+        }
+
+        nebulaGeometry.setAttribute('position', new THREE.BufferAttribute(nebulaPositions, 3));
+        nebulaGeometry.setAttribute('color', new THREE.BufferAttribute(nebulaColors, 3));
+
+        const nebulaMaterial = new THREE.PointsMaterial({
+            size: 4,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.2,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const nebula = new THREE.Points(nebulaGeometry, nebulaMaterial);
+        scene.add(nebula);
+
+        // Create realistic Sun with corona
+        const sunGeometry = new THREE.SphereGeometry(10, 64, 64);
+        const sunMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xffaa00,
+            emissive: 0xffaa00,
+            emissiveIntensity: 1
+        });
+        const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+        sun.position.set(-80, 20, -100);
+        scene.add(sun);
+
+        // Sun corona layers
+        for(let i = 0; i < 3; i++) {
+            const coronaGeometry = new THREE.SphereGeometry(10 + (i + 1) * 2, 32, 32);
+            const coronaMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffaa00,
+                transparent: true,
+                opacity: 0.15 / (i + 1),
+                blending: THREE.AdditiveBlending,
+                side: THREE.BackSide
+            });
+            const corona = new THREE.Mesh(coronaGeometry, coronaMaterial);
+            corona.position.copy(sun.position);
+            scene.add(corona);
+        }
+
+        // Realistic Planets with textures
+        const textureLoader = new THREE.TextureLoader();
+        const planets = [];
+
+        function createPlanet(size, color, orbitRadius, orbitSpeed, hasRings = false, emissive = 0x000000) {
+            const planetGeometry = new THREE.SphereGeometry(size, 64, 64);
+            const planetMaterial = new THREE.MeshStandardMaterial({ 
+                color: color,
+                emissive: emissive,
+                emissiveIntensity: 0.2,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+            planet.castShadow = true;
+            planet.receiveShadow = true;
+            
+            // Orbit ring
+            const orbitGeometry = new THREE.RingGeometry(orbitRadius - 0.2, orbitRadius + 0.2, 128);
+            const orbitMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ff88,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.15
+            });
+            const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+            orbit.rotation.x = Math.PI / 2;
+            scene.add(orbit);
+            
+            const planetData = {
+                planet: planet,
+                orbitRadius: orbitRadius,
+                orbitSpeed: orbitSpeed,
+                angle: Math.random() * Math.PI * 2,
+                orbit: orbit
+            };
+
+            // Saturn-like rings
+            if (hasRings) {
+                const ringGeometry = new THREE.RingGeometry(size * 1.5, size * 2.5, 128);
+                const ringMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xccaa77,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.7,
+                    roughness: 0.9
+                });
+                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                ring.rotation.x = Math.PI / 2.3;
+                planet.add(ring);
+                planetData.ring = ring;
+            }
+            
+            return planetData;
+        }
+
+        // Create all planets
+        planets.push(createPlanet(1.5, 0xff6b35, 35, 0.018, false, 0x331100)); // Mercury
+        planets.push(createPlanet(2.2, 0xffcc88, 50, 0.014, false, 0x442200)); // Venus
+        planets.push(createPlanet(2.5, 0x2288ff, 70, 0.01, false, 0x001133)); // Earth
+        planets.push(createPlanet(2, 0xff4444, 90, 0.008, false, 0x330000)); // Mars
+        planets.push(createPlanet(5, 0xccaa77, 120, 0.005, false, 0x221100)); // Jupiter
+        planets.push(createPlanet(4.5, 0xffdd99, 160, 0.004, true, 0x332200)); // Saturn
+        planets.push(createPlanet(3, 0x66ccff, 200, 0.003, false, 0x002244)); // Uranus
+        planets.push(createPlanet(3, 0x4455ff, 240, 0.002, false, 0x000033)); // Neptune
+
+        planets.forEach(p => scene.add(p.planet));
+
+        // Create detailed astronaut
+        const astronautGroup = new THREE.Group();
+        
+        // Helmet (glass)
+        const helmetGeometry = new THREE.SphereGeometry(2, 32, 32);
+        const helmetMaterial = new THREE.MeshPhysicalMaterial({ 
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.2,
+            roughness: 0.1,
+            metalness: 0.1,
+            transmission: 0.9,
+            thickness: 0.5
+        });
+        const helmet = new THREE.Mesh(helmetGeometry, helmetMaterial);
+        astronautGroup.add(helmet);
+
+        // Helmet frame
+        const helmetFrameGeometry = new THREE.TorusGeometry(2, 0.1, 16, 100);
+        const helmetFrameMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xcccccc,
+            metalness: 0.8,
+            roughness: 0.2
+        });
+        const helmetFrame = new THREE.Mesh(helmetFrameGeometry, helmetFrameMaterial);
+        helmetFrame.rotation.x = Math.PI / 2;
+        helmetFrame.position.y = -0.5;
+        astronautGroup.add(helmetFrame);
+
+        // Visor (reflective)
+        const visorGeometry = new THREE.SphereGeometry(1.8, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
+        const visorMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x00ffff,
+            metalness: 1,
+            roughness: 0.1,
+            emissive: 0x004444,
+            emissiveIntensity: 0.5
+        });
+        const visor = new THREE.Mesh(visorGeometry, visorMaterial);
+        visor.rotation.x = -Math.PI / 4;
+        visor.position.y = 0.3;
+        astronautGroup.add(visor);
+
+        // Body (main suit)
+        const bodyGeometry = new THREE.CylinderGeometry(1.5, 1.8, 4, 32);
+        const bodyMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xeeeeee,
+            metalness: 0.3,
+            roughness: 0.7
+        });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.y = -3.5;
+        astronautGroup.add(body);
+
+        // Chest pack
+        const chestPackGeometry = new THREE.BoxGeometry(1.2, 1.5, 0.5);
+        const chestPackMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x00ff88,
+            metalness: 0.6,
+            roughness: 0.4,
+            emissive: 0x00ff88,
+            emissiveIntensity: 0.3
+        });
+        const chestPack = new THREE.Mesh(chestPackGeometry, chestPackMaterial);
+        chestPack.position.set(0, -2.5, 1.5);
+        astronautGroup.add(chestPack);
+
+        // Arms
+        const armGeometry = new THREE.CylinderGeometry(0.4, 0.4, 3, 16);
+        const armMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xdddddd,
+            metalness: 0.4,
+            roughness: 0.6
+        });
+        
+        const leftArm = new THREE.Mesh(armGeometry, armMaterial);
+        leftArm.position.set(-2, -3, 0);
+        leftArm.rotation.z = Math.PI / 4;
+        astronautGroup.add(leftArm);
+
+        const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+        rightArm.position.set(2, -3, 0);
+        rightArm.rotation.z = -Math.PI / 4;
+        astronautGroup.add(rightArm);
+
+        // Hands (gloves)
+        const handGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+        const handMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xcccccc,
+            metalness: 0.5,
+            roughness: 0.5
+        });
+        
+        const leftHand = new THREE.Mesh(handGeometry, handMaterial);
+        leftHand.position.set(-3, -4.5, 0);
+        astronautGroup.add(leftHand);
+
+        const rightHand = new THREE.Mesh(handGeometry, handMaterial);
+        rightHand.position.set(3, -4.5, 0);
+        astronautGroup.add(rightHand);
+
+        // Legs
+        const legGeometry = new THREE.CylinderGeometry(0.5, 0.5, 3.5, 16);
+        const legMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xdddddd,
+            metalness: 0.4,
+            roughness: 0.6
+        });
+        
+        const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+        leftLeg.position.set(-0.7, -7, 0);
+        astronautGroup.add(leftLeg);
+
+        const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+        rightLeg.position.set(0.7, -7, 0);
+        astronautGroup.add(rightLeg);
+
+        // Boots
+        const bootGeometry = new THREE.BoxGeometry(0.8, 0.6, 1.2);
+        const bootMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xaaaaaa,
+            metalness: 0.6,
+            roughness: 0.4
+        });
+        
+        const leftBoot = new THREE.Mesh(bootGeometry, bootMaterial);
+        leftBoot.position.set(-0.7, -8.8, 0.3);
+        astronautGroup.add(leftBoot);
+
+        const rightBoot = new THREE.Mesh(bootGeometry, bootMaterial);
+        rightBoot.position.set(0.7, -8.8, 0.3);
+        astronautGroup.add(rightBoot);
+
+        // Backpack (life support)
+        const backpackGeometry = new THREE.BoxGeometry(2, 3, 1);
+        const backpackMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xcccccc,
+            metalness: 0.7,
+            roughness: 0.3
+        });
+        const backpack = new THREE.Mesh(backpackGeometry, backpackMaterial);
+        backpack.position.set(0, -3, -1.5);
+        astronautGroup.add(backpack);
+
+        // Antenna on backpack
+        const antennaGeometry = new THREE.CylinderGeometry(0.05, 0.05, 2, 8);
+        const antennaMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xffaa00,
+            metalness: 0.9,
+            roughness: 0.1,
+            emissive: 0xffaa00,
+            emissiveIntensity: 0.5
+        });
+        const antenna = new THREE.Mesh(antennaGeometry, antennaMaterial);
+        antenna.position.set(0.5, -2, -2);
+        astronautGroup.add(antenna);
+
+        // Antenna tip (glowing)
+        const antennaTipGeometry = new THREE.SphereGeometry(0.15, 16, 16);
+        const antennaTipMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xff0000,
+            emissive: 0xff0000
+        });
+        const antennaTip = new THREE.Mesh(antennaTipGeometry, antennaTipMaterial);
+        antennaTip.position.set(0.5, -1, -2);
+        astronautGroup.add(antennaTip);
+
+        // Add light to antenna tip
+        const antennaLight = new THREE.PointLight(0xff0000, 0.5, 10);
+        antennaLight.position.copy(antennaTip.position);
+        astronautGroup.add(antennaLight);
+
+        astronautGroup.position.set(30, 15, 30);
+        astronautGroup.rotation.y = -Math.PI / 3;
+        scene.add(astronautGroup);
+
+        // Glowing particles around astronaut
+        const astronautParticlesGeometry = new THREE.BufferGeometry();
+        const astronautParticlesCount = 300;
+        const astronautParticlesPositions = new Float32Array(astronautParticlesCount * 3);
+        const astronautParticlesColors = new Float32Array(astronautParticlesCount * 3);
+
+        for(let i = 0; i < astronautParticlesCount; i++) {
+            const i3 = i * 3;
+            const radius = 4 + Math.random() * 6;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI;
+            
+            astronautParticlesPositions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+            astronautParticlesPositions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            astronautParticlesPositions[i3 + 2] = radius * Math.cos(phi);
+
+            astronautParticlesColors[i3] = 0;
+            astronautParticlesColors[i3 + 1] = 0.8 + Math.random() * 0.2;
+            astronautParticlesColors[i3 + 2] = 0.8 + Math.random() * 0.2;
+        }
+
+        astronautParticlesGeometry.setAttribute('position', new THREE.BufferAttribute(astronautParticlesPositions, 3));
+        astronautParticlesGeometry.setAttribute('color', new THREE.BufferAttribute(astronautParticlesColors, 3));
+
+        const astronautParticlesMaterial = new THREE.PointsMaterial({
+            size: 0.2,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+
+        const astronautParticles = new THREE.Points(astronautParticlesGeometry, astronautParticlesMaterial);
+        astronautGroup.add(astronautParticles);
+
+        // AI Data cubes
+        const aiCubes = [];
+        for(let i = 0; i < 25; i++) {
+            const cubeSize = 1 + Math.random() * 3;
+            const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+            const cubeMaterial = new THREE.MeshStandardMaterial({
+                color: Math.random() > 0.5 ? 0x00ff88 : 0x0088ff,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.6,
+                emissive: Math.random() > 0.5 ? 0x00ff88 : 0x0088ff,
+                emissiveIntensity: 0.3
+            });
+            const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            
+            cube.position.set(
+                (Math.random() - 0.5) * 300,
+                (Math.random() - 0.5) * 150,
+                (Math.random() - 0.5) * 300
+            );
+            
+            cube.rotation.set(
+                Math.random() * Math.PI,
+                Math.random() * Math.PI,
+                Math.random() * Math.PI
+            );
+            
+            scene.add(cube);
+            aiCubes.push({
+                mesh: cube,
+                rotationSpeed: {
+                    x: (Math.random() - 0.5) * 0.03,
+                    y: (Math.random() - 0.5) * 0.03,
+                    z: (Math.random() - 0.5) * 0.03
+                },
+                floatSpeed: 0.02 + Math.random() * 0.03,
+                floatOffset: Math.random() * Math.PI * 2
+            });
+        }
+
+        // Holographic data streams
+        const dataStreams = [];
+        for(let i = 0; i < 30; i++) {
+            const points = [];
+            const segments = 5 + Math.floor(Math.random() * 5);
+            let currentPoint = new THREE.Vector3(
+                (Math.random() - 0.5) * 200,
+                (Math.random() - 0.5) * 100,
+                (Math.random() - 0.5) * 200
+            );
+            
+            for(let j = 0; j < segments; j++) {
+                points.push(currentPoint.clone());
+                currentPoint = currentPoint.clone().add(new THREE.Vector3(
+                    (Math.random() - 0.5) * 30,
+                    (Math.random() - 0.5) * 30,
+                    (Math.random() - 0.5) * 30
+                ));
+            }
+            
+            const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+            const lineMaterial = new THREE.LineBasicMaterial({
+                color: Math.random() > 0.5 ? 0x00ff88 : 0x0088ff,
+                transparent: true,
+                opacity: 0.3
+            });
+            const line = new THREE.Line(lineGeometry, lineMaterial);
+            scene.add(line);
+            dataStreams.push({
+                line: line,
+                pulseOffset: Math.random() * Math.PI * 2
+            });
+        }
+
+        // Mouse interaction
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        // Scroll tracking
+        let scrollY = 0;
+        window.addEventListener('scroll', () => {
+            scrollY = window.scrollY;
+        });
+
+        // FPS counter
+        let lastTime = performance.now();
+        let frames = 0;
+        let fps = 60;
+
+        // Animation Loop
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+            const deltaTime = clock.getDelta();
+
+            // FPS calculation
+            frames++;
+            const currentTime = performance.now();
+            if (currentTime >= lastTime + 1000) {
+                fps = Math.round((frames * 1000) / (currentTime - lastTime));
+                lastTime = currentTime;
+                frames = 0;
+                const fpsElement = document.getElementById('fps');
+                if (fpsElement) fpsElement.textContent = `FPS: ${fps}`;
+            }
+
+            // Rotate starfield
+            stars.rotation.y = elapsedTime * 0.0003;
+            stars.rotation.x = elapsedTime * 0.0001;
+
+            // Rotate nebula
+            nebula.rotation.y = elapsedTime * 0.0002;
+            nebula.rotation.z = elapsedTime * 0.0001;
+
+            // Animate sun corona
+            sun.rotation.y = elapsedTime * 0.1;
+
+            // Animate planets
+            planets.forEach((p, index) => {
+                p.angle += p.orbitSpeed;
+                p.planet.position.x = Math.cos(p.angle) * p.orbitRadius;
+                p.planet.position.z = Math.sin(p.angle) * p.orbitRadius;
+                p.planet.rotation.y += 0.01 + (index * 0.002);
+                
+                // Vertical bobbing
+                p.planet.position.y = Math.sin(elapsedTime * 0.5 + index) * 3;
+                
+                // Rotate orbit ring
+                p.orbit.rotation.z = elapsedTime * 0.05;
+            });
+
+            // Animate astronaut
+            astronautGroup.position.y = 15 + Math.sin(elapsedTime * 0.4) * 4;
+            astronautGroup.rotation.y = -Math.PI / 3 + Math.sin(elapsedTime * 0.2) * 0.3;
+            astronautGroup.rotation.z = Math.sin(elapsedTime * 0.3) * 0.15;
+            astronautGroup.rotation.x = Math.sin(elapsedTime * 0.25) * 0.1;
+
+            // Animate astronaut arms
+            const leftArm = astronautGroup.children[5];
+            const rightArm = astronautGroup.children[6];
+            if (leftArm) leftArm.rotation.z = Math.PI / 4 + Math.sin(elapsedTime * 0.8) * 0.3;
+            if (rightArm) rightArm.rotation.z = -Math.PI / 4 + Math.sin(elapsedTime * 0.8 + Math.PI) * 0.3;
+
+            // Rotate particles around astronaut
+            astronautParticles.rotation.y = elapsedTime * 0.4;
+            astronautParticles.rotation.x = elapsedTime * 0.3;
+
+            // Pulse antenna light
+            const antennaTip = astronautGroup.children.find(child => child.geometry && child.geometry.type === 'SphereGeometry' && child.material.color.getHex() === 0xff0000);
+            if (antennaTip) {
+                const pulseFactor = (Math.sin(elapsedTime * 4) + 1) / 2;
+                antennaTip.material.emissiveIntensity = 0.5 + pulseFactor * 0.5;
+            }
+
+            // Animate AI cubes
+            aiCubes.forEach(cube => {
+                cube.mesh.rotation.x += cube.rotationSpeed.x;
+                cube.mesh.rotation.y += cube.rotationSpeed.y;
+                cube.mesh.rotation.z += cube.rotationSpeed.z;
+                
+                cube.mesh.position.y += Math.sin(elapsedTime * cube.floatSpeed + cube.floatOffset) * 0.03;
+                
+                // Pulse opacity
+                const pulseFactor = (Math.sin(elapsedTime * 2 + cube.floatOffset) + 1) / 2;
+                cube.mesh.material.opacity = 0.4 + pulseFactor * 0.3;
+            });
+
+            // Animate data streams
+            dataStreams.forEach(stream => {
+                const pulseFactor = (Math.sin(elapsedTime * 2 + stream.pulseOffset) + 1) / 2;
+                stream.line.material.opacity = 0.2 + pulseFactor * 0.3;
+                stream.line.rotation.y += 0.001;
+            });
+
+            // Animate lights
+            blueLight1.intensity = 1 + Math.sin(elapsedTime * 2) * 0.3;
+            blueLight2.intensity = 1 + Math.sin(elapsedTime * 2 + Math.PI) * 0.3;
+
+            // Camera follows mouse
+            targetX = mouseX * 15;
+            targetY = mouseY * 15;
+            camera.position.x += (targetX - camera.position.x) * 0.03;
+            camera.position.y += (20 + targetY - camera.position.y) * 0.03;
+
+            // Camera moves based on scroll
+            camera.position.z = 100 - scrollY * 0.03;
+            camera.rotation.x = Math.sin(scrollY * 0.0002) * 0.1;
+
+            // Update coordinates in HUD
+            const coordsElement = document.getElementById('coordinates');
+            if (coordsElement) {
+                coordsElement.textContent = `COORDS: [${Math.floor(camera.position.x)}, ${Math.floor(camera.position.y)}, ${Math.floor(camera.position.z)}]`;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        });
+
+        // Intersection Observer for sections
+        const observerOptions = {
+            threshold: 0.2,
+            rootMargin: '0px'
+        };
+
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const container = entry.target.querySelector('.hologram-container');
+                    if (container) container.classList.add('visible');
+                    
+                    const sectionIndex = entry.target.dataset.section;
+                    document.querySelectorAll('.nav-orb').forEach(orb => {
+                        orb.classList.remove('active');
+                    });
+                    const activeOrb = document.querySelector(`.nav-orb[data-section="${sectionIndex}"]`);
+                    if (activeOrb) activeOrb.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.space-section').forEach(section => {
+            sectionObserver.observe(section);
+        });
+
+        // Hero observer
+        const heroObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    document.querySelectorAll('.nav-orb').forEach(orb => {
+                        orb.classList.remove('active');
+                    });
+                    const heroOrb = document.querySelector('.nav-orb[data-section="0"]');
+                    if (heroOrb) heroOrb.classList.add('active');
+                }
+            });
+        }, { threshold: 0.5 });
+
+        heroObserver.observe(document.querySelector('.hero-space'));
+
+        // Navigation orb clicks
+        document.querySelectorAll('.nav-orb').forEach(orb => {
+            orb.addEventListener('click', () => {
+                const sectionIndex = orb.dataset.section;
+                let targetElement;
+                
+                if (sectionIndex === '0') {
+                    targetElement = document.querySelector('.hero-space');
+                } else {
+                    targetElement = document.querySelector(`.space-section[data-section="${sectionIndex}"]`);
+                }
+                
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Loading screen
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loadingCosmos').classList.add('hidden');
+            }, 2500);
+        });
+
+        // Shooting stars
+        function createShootingStar() {
+            const startPos = new THREE.Vector3(
+                (Math.random() - 0.5) * 800,
+                200 + Math.random() * 200,
+                (Math.random() - 0.5) * 800
+            );
+            const endPos = startPos.clone();
+            endPos.x += (Math.random() - 0.5) * 200;
+            endPos.y -= 200 + Math.random() * 100;
+            endPos.z += (Math.random() - 0.5) * 200;
+            
+            const shootingStarGeometry = new THREE.BufferGeometry().setFromPoints([startPos, endPos]);
+            const shootingStarMaterial = new THREE.LineBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 1,
+                linewidth: 2
+            });
+            
+            const shootingStar = new THREE.Line(shootingStarGeometry, shootingStarMaterial);
+            scene.add(shootingStar);
+            
+            // Add glow point at the head
+            const glowGeometry = new THREE.SphereGeometry(0.5, 8, 8);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 1
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            glow.position.copy(startPos);
+            scene.add(glow);
+            
+            let progress = 0;
+            const duration = 1500;
+            const startTime = Date.now();
+            
+            const animateShootingStar = () => {
+                const elapsed = Date.now() - startTime;
+                progress = elapsed / duration;
+                
+                if (progress < 1) {
+                    const currentPos = new THREE.Vector3().lerpVectors(startPos, endPos, progress);
+                    glow.position.copy(currentPos);
+                    
+                    const opacity = 1 - progress;
+                    shootingStarMaterial.opacity = opacity;
+                    glowMaterial.opacity = opacity;
+                    
+                    requestAnimationFrame(animateShootingStar);
+                } else {
+                    scene.remove(shootingStar);
+                    scene.remove(glow);
+                }
+            };
+            
+            animateShootingStar();
+        }
+
+        // Create shooting stars periodically
+        setInterval(() => {
+            if (Math.random() > 0.6) {
+                createShootingStar();
+            }
+        }, 2500);
+
+        // Create asteroids
+        const asteroids = [];
+        for(let i = 0; i < 15; i++) {
+            const asteroidGeometry = new THREE.DodecahedronGeometry(1 + Math.random() * 2, 0);
+            const asteroidMaterial = new THREE.MeshStandardMaterial({
+                color: 0x666666,
+                roughness: 0.9,
+                metalness: 0.1
+            });
+            const asteroid = new THREE.Mesh(asteroidGeometry, asteroidMaterial);
+            
+            asteroid.position.set(
+                (Math.random() - 0.5) * 400,
+                (Math.random() - 0.5) * 200,
+                (Math.random() - 0.5) * 400
+            );
+            
+            asteroid.rotation.set(
+                Math.random() * Math.PI,
+                Math.random() * Math.PI,
+                Math.random() * Math.PI
+            );
+            
+            scene.add(asteroid);
+            asteroids.push({
+                mesh: asteroid,
+                rotationSpeed: {
+                    x: (Math.random() - 0.5) * 0.02,
+                    y: (Math.random() - 0.5) * 0.02,
+                    z: (Math.random() - 0.5) * 0.02
+                }
+            });
+        }
+
+        // Add asteroid animation to main loop
+        const originalAnimate = animate;
+        animate = function() {
+            asteroids.forEach(asteroid => {
+                asteroid.mesh.rotation.x += asteroid.rotationSpeed.x;
+                asteroid.mesh.rotation.y += asteroid.rotationSpeed.y;
+                asteroid.mesh.rotation.z += asteroid.rotationSpeed.z;
+            });
+            originalAnimate();
+        };
+
+        // Satellite/Space station
+        const satelliteGroup = new THREE.Group();
+        
+        const satelliteBodyGeometry = new THREE.BoxGeometry(2, 1, 1);
+        const satelliteBodyMaterial = new THREE.MeshStandardMaterial({
+            color: 0xcccccc,
+            metalness: 0.8,
+            roughness: 0.2
+        });
+        const satelliteBody = new THREE.Mesh(satelliteBodyGeometry, satelliteBodyMaterial);
+        satelliteGroup.add(satelliteBody);
+
+        // Solar panels
+        const panelGeometry = new THREE.BoxGeometry(0.1, 3, 1.5);
+        const panelMaterial = new THREE.MeshStandardMaterial({
+            color: 0x0066ff,
+            metalness: 0.9,
+            roughness: 0.1,
+            emissive: 0x0044aa,
+            emissiveIntensity: 0.3
+        });
+        
+        const leftPanel = new THREE.Mesh(panelGeometry, panelMaterial);
+        leftPanel.position.x = -2;
+        satelliteGroup.add(leftPanel);
+
+        const rightPanel = new THREE.Mesh(panelGeometry, panelMaterial);
+        rightPanel.position.x = 2;
+        satelliteGroup.add(rightPanel);
+
+        satelliteGroup.position.set(-40, 30, 40);
+        scene.add(satelliteGroup);
+
+        // Animate satellite
+        setInterval(() => {
+            const targetRotation = satelliteGroup.rotation.y + Math.PI / 4;
+            const animateSatellite = () => {
+                if (Math.abs(satelliteGroup.rotation.y - targetRotation) > 0.01) {
+                    satelliteGroup.rotation.y += 0.02;
+                    requestAnimationFrame(animateSatellite);
+                }
+            };
+            animateSatellite();
+        }, 5000);
+
+        // Add pulsing light to satellite
+        const satelliteLight = new THREE.PointLight(0x00ff00, 1, 30);
+        satelliteLight.position.copy(satelliteGroup.position);
+        scene.add(satelliteLight);
+
+        // Particle trail for satellite
+        const trailGeometry = new THREE.BufferGeometry();
+        const trailCount = 50;
+        const trailPositions = new Float32Array(trailCount * 3);
+        trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+        
+        const trailMaterial = new THREE.PointsMaterial({
+            size: 0.3,
+            color: 0x00ff88,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const trail = new THREE.Points(trailGeometry, trailMaterial);
+        scene.add(trail);
+
+        // Update trail positions
+        let trailIndex = 0;
+        setInterval(() => {
+            const positions = trail.geometry.attributes.position.array;
+            positions[trailIndex * 3] = satelliteGroup.position.x;
+            positions[trailIndex * 3 + 1] = satelliteGroup.position.y;
+            positions[trailIndex * 3 + 2] = satelliteGroup.position.z;
+            trailIndex = (trailIndex + 1) % trailCount;
+            trail.geometry.attributes.position.needsUpdate = true;
+        }, 100);
+
+        console.log('🚀 ULTRA SPACE PORTFOLIO LOADED');
+        console.log('📊 Scene Stats:');
+        console.log(`   - Stars: ${starCount}`);
+        console.log(`   - Planets: ${planets.length}`);
+        console.log(`   - AI Cubes: ${aiCubes.length}`);
+        console.log(`   - Asteroids: ${asteroids.length}`);
+        console.log(`   - Data Streams: ${dataStreams.length}`);
+        console.log('✨ Enjoy the journey through space!');
+    </script>
+</body>
+</html>
